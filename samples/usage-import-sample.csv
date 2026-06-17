@@ -1,0 +1,4 @@
+resource_name,provider,region,resource_type,owner,monthly_budget,record_date,cpu_core_hours,memory_gb_hours,storage_gb_hours,network_gb,utilization_score
+ecs-import-demo,Huawei Cloud,cn-east-3,ECS,导入演示,360,2026-06-13,42,160,720,35,39
+ecs-import-demo,Huawei Cloud,cn-east-3,ECS,导入演示,360,2026-06-14,46,172,720,38,41
+gaussdb-import-demo,Huawei Cloud,cn-north-4,GaussDB,导入演示,680,2026-06-14,68,260,980,22,76

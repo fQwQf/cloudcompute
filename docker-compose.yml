@@ -1,0 +1,91 @@
+name: cloudcostlab
+
+services:
+  opengauss:
+    image: ${OPENGAUSS_IMAGE:-docker.m.daocloud.io/enmotech/opengauss:3.0.0}
+    container_name: cloudcostlab-opengauss
+    privileged: true
+    shm_size: 1gb
+    environment:
+      GS_PASSWORD: ${OPENGAUSS_PASSWORD:-CloudGauss@2026}
+      GS_PORT: 5432
+      TZ: Asia/Shanghai
+    ports:
+      - "15432:5432"
+    volumes:
+      - opengauss_data:/var/lib/opengauss/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "LD_LIBRARY_PATH=/usr/local/opengauss/lib:/usr/local/opengauss/lib/postgresql /usr/local/opengauss/bin/gsql -d postgres -U ${OPENGAUSS_USER:-gaussdb} -W \"$$GS_PASSWORD\" -h 127.0.0.1 -p 5432 -c 'select 1;' >/dev/null 2>&1 || exit 1"
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+    networks:
+      - appnet
+
+  backend:
+    build:
+      context: ./backend
+      args:
+        PYTHON_IMAGE: ${PYTHON_IMAGE:-docker.m.daocloud.io/library/python:3.13-slim}
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}
+    container_name: cloudcostlab-backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://gaussdb:CloudGauss%402026@opengauss:5432/postgres}
+      CORS_ORIGINS: http://localhost:8080,http://127.0.0.1:8080,http://localhost:5173
+      AUTO_SEED: "true"
+      TZ: Asia/Shanghai
+    ports:
+      - "8000:8000"
+    depends_on:
+      opengauss:
+        condition: service_started
+    networks:
+      - appnet
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-docker.m.daocloud.io/library/node:22-alpine}
+        NGINX_IMAGE: ${NGINX_IMAGE:-docker.m.daocloud.io/library/nginx:1.27-alpine}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+    container_name: cloudcostlab-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - appnet
+
+  spark-analytics:
+    build:
+      context: ./spark-job
+      args:
+        SPARK_IMAGE: ${SPARK_IMAGE:-docker.m.daocloud.io/bitnami/spark:3.5}
+        POSTGRES_JDBC_URL: ${POSTGRES_JDBC_URL:-https://maven.aliyun.com/repository/public/org/postgresql/postgresql/42.7.4/postgresql-42.7.4.jar}
+    container_name: cloudcostlab-spark-analytics
+    profiles:
+      - spark
+    environment:
+      SPARK_JDBC_URL: jdbc:postgresql://opengauss:5432/postgres
+      SPARK_DB_USER: ${OPENGAUSS_USER:-gaussdb}
+      SPARK_DB_PASSWORD: ${OPENGAUSS_PASSWORD:-CloudGauss@2026}
+      SPARK_DB_DRIVER: org.postgresql.Driver
+      SPARK_OUTPUT_TABLE: analytics_snapshots
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
+
+volumes:
+  opengauss_data:
