@@ -33,6 +33,7 @@ services:
       args:
         PYTHON_IMAGE: ${PYTHON_IMAGE:-docker.m.daocloud.io/library/python:3.13-slim}
         PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}
+        APT_MIRROR: ${APT_MIRROR:-deb.debian.org}
     container_name: cloudcostlab-backend
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://gaussdb:CloudGauss%402026@opengauss:5432/postgres}
