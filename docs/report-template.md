@@ -56,8 +56,7 @@ docker compose up -d --build
 数据库验证命令：
 
 ```bash
-docker exec -it cloudcostlab-opengauss bash
-gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432
+docker exec cloudcostlab-opengauss bash -c "LD_LIBRARY_PATH=/usr/local/opengauss/lib:/usr/local/opengauss/lib/postgresql /usr/local/opengauss/bin/gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432 -c 'select count(*) as resources from cloud_resources;'"
 ```
 
 ### 3.2 部署前端/后端应用

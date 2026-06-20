@@ -1,0 +1,128 @@
+\documentclass[type=bachelor,oneside]{../whu-thesis/whu-thesis}
+
+\whusetup{
+  info = {
+    title = {基于 openGauss 的云资源成本与碳排放分析平台设计与实现},
+    department = {计算机学院},
+    author = {童济舟},
+    student-id = {2024302111261},
+    supervisor = {课程实验},
+    academic-title = {},
+    major = {特色软件工程},
+    year = 2026,
+    month = 6,
+    keywords = {openGauss, Docker, FastAPI, React, Spark},
+  },
+  style = {
+    font = termes,
+    math-font = termes,
+    cjk-font = fandol,
+    bib-backend = bibtex,
+    bib-resource = {../whu-thesis/ref/bachelor-refs.bib},
+    license = false,
+  }
+}
+
+\ExplSyntaxOn
+\cs_gset_protected:Npn \__whu_bachelor_frontmatter_output: {}
+\ExplSyntaxOff
+
+\usepackage{array}
+\usepackage{calc}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{makecell}
+\usepackage{tabularx}
+\usepackage{fancyvrb}
+
+\graphicspath{{../docs/screenshots/}{../whu-thesis/logo/}}
+\setkeys{Gin}{width=.96\linewidth,height=.72\textheight,keepaspectratio}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\setlength{\headheight}{16pt}
+\AtBeginDocument{\setlength{\headheight}{16pt}}
+\emergencystretch=2em
+\Urlmuskip=0mu plus 1mu
+\setmonofont{Noto Sans Mono CJK SC}[Scale=MatchLowercase]
+\setCJKmonofont{Noto Sans Mono CJK SC}[Scale=MatchLowercase]
+
+\DefineVerbatimEnvironment{verbatim}{Verbatim}{
+  fontsize=\small,
+  frame=single,
+  framesep=2mm
+}
+
+\fancypagestyle{courseplain}{
+  \fancyhf{}
+  \fancyhead[C]{《大数据与云计算技术》本科生课程实验报告}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+}
+\fancypagestyle{bachelor-mainmatter}{
+  \fancyhf{}
+  \fancyhead[C]{《大数据与云计算技术》本科生课程实验报告}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+}
+\fancypagestyle{bachelor-frontmatter}{
+  \fancyhf{}
+  \fancyhead[C]{《大数据与云计算技术》本科生课程实验报告}
+  \fancyfoot[C]{\Roman{page}}
+  \renewcommand{\headrulewidth}{0.4pt}
+}
+
+\newcommand{\coursecoverrow}[2]{%
+  \noindent\begin{tabular}{@{}p{4em}p{25em}@{}}
+    \makebox[3.6em][s]{#1} &
+    \centering\arraybackslash #2 \\
+    \cline{2-2}
+  \end{tabular}\par\vspace{0.75em}
+}
+
+\begin{document}
+\setlength{\headheight}{16pt}
+
+\frontmatter
+\begin{titlepage}
+  \thispagestyle{empty}
+  \centering
+  \vspace*{0.8cm}
+  \includegraphics[width=2.8cm,height=2.8cm,keepaspectratio]{whu-logo.png}\par
+  \vspace{0.5cm}
+  {\zihao{1}\heiti 武汉大学\par}
+  \vspace{0.35cm}
+  {\zihao{3}\heiti 计算机学院\par}
+  \vspace{1.2cm}
+  {\zihao{1}\heiti 《大数据与云计算技术》\par}
+  \vspace{0.3cm}
+  {\zihao{1}\heiti 本科生课程实验报告\par}
+  \vspace{1.5cm}
+
+  \begin{minipage}{0.82\textwidth}
+    \zihao{3}
+    \coursecoverrow{题目}{基于 openGauss 的云资源成本与碳排放分析平台设计与实现}
+    \coursecoverrow{专业}{特色软件工程}
+    \coursecoverrow{班级}{特软班}
+    \coursecoverrow{姓名}{童济舟}
+    \coursecoverrow{学号}{2024302111261}
+  \end{minipage}
+
+  \vfill
+  {\zihao{3}武汉大学计算机学院\par}
+  \vspace{0.5cm}
+  {\zihao{3}2026 年 6 月 20 日\par}
+\end{titlepage}
+
+\cleardoublepage
+\pagestyle{courseplain}
+\tableofcontents
+
+\mainmatter
+\setlength{\headheight}{16pt}
+\ctexset{chapter = {pagestyle = courseplain}}
+\pagestyle{courseplain}
+\input{body.tex}
+
+\end{document}

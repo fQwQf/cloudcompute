@@ -103,4 +103,3 @@ npm run build
 
 按任务书模板撰写即可，具体章节内容、截图建议和可复用文字见 [docs/report-guide.md](docs/report-guide.md)。
 可直接套用的报告骨架见 [docs/report-template.md](docs/report-template.md)。
-答辩讲解和降低“AI 模板感”的建议见 [docs/defense-notes.md](docs/defense-notes.md)。

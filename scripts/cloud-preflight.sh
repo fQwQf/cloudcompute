@@ -115,11 +115,22 @@ if docker inspect cloudcostlab-opengauss >/dev/null 2>&1; then
     DB_USER="${OPENGAUSS_USER:-$DB_USER}"
     DB_PASSWORD="${OPENGAUSS_PASSWORD:-$DB_PASSWORD}"
   fi
-  if docker exec cloudcostlab-opengauss gsql -d postgres -U "$DB_USER" -W "$DB_PASSWORD" -h 127.0.0.1 -p 5432 -c "select count(*) as resources from cloud_resources;" >/tmp/cloudcostlab-db.txt 2>/tmp/cloudcostlab-db.err; then
+  if docker exec \
+    -e LD_LIBRARY_PATH=/usr/local/opengauss/lib:/usr/local/opengauss/lib/postgresql \
+    cloudcostlab-opengauss \
+    /usr/local/opengauss/bin/gsql \
+    -d postgres \
+    -U "$DB_USER" \
+    -W "$DB_PASSWORD" \
+    -h 127.0.0.1 \
+    -p 5432 \
+    -c "select count(*) as resources from cloud_resources;" \
+    >/tmp/cloudcostlab-db.txt 2>/tmp/cloudcostlab-db.err; then
     pass "openGauss query ok"
     cat /tmp/cloudcostlab-db.txt
   else
-    warn "openGauss query failed; database may still be initializing"
+    warn "openGauss query failed; database may still be initializing, or gsql credentials do not match"
+    warn "used /usr/local/opengauss/bin/gsql with LD_LIBRARY_PATH=/usr/local/opengauss/lib:/usr/local/opengauss/lib/postgresql"
     cat /tmp/cloudcostlab-db.err || true
   fi
 else

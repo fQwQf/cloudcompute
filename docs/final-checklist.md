@@ -52,27 +52,10 @@ docker compose ps
 curl http://localhost:8000/api/health
 ```
 
-进入 openGauss：
+验证 openGauss。该镜像中的 `gsql` 不在默认 `PATH`，建议直接执行完整路径：
 
 ```bash
-docker exec -it cloudcostlab-opengauss bash
-gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432
-```
-
-数据库验证 SQL：
-
-```sql
-\dt
-select count(*) from cloud_resources;
-select count(*) from usage_records;
-select generated_by, total_cost, carbon_kg, snapshot_time
-from analytics_snapshots
-order by snapshot_time desc
-limit 5;
-select severity, alert_type, title, status
-from cloud_alerts
-order by created_at desc
-limit 10;
+docker exec cloudcostlab-opengauss bash -c "LD_LIBRARY_PATH=/usr/local/opengauss/lib:/usr/local/opengauss/lib/postgresql /usr/local/opengauss/bin/gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432 -c 'select count(*) as resources from cloud_resources; select count(*) as usage_records from usage_records; select generated_by, total_cost, carbon_kg, snapshot_time from analytics_snapshots order by snapshot_time desc limit 5; select severity, alert_type, title, status from cloud_alerts order by created_at desc limit 10;'"
 ```
 
 运行自检脚本：
@@ -91,11 +74,8 @@ docker compose --profile spark run --rm spark-analytics
 
 然后查询：
 
-```sql
-select generated_by, total_cost, snapshot_time
-from analytics_snapshots
-order by snapshot_time desc
-limit 5;
+```bash
+docker exec cloudcostlab-opengauss bash -c "LD_LIBRARY_PATH=/usr/local/opengauss/lib:/usr/local/opengauss/lib/postgresql /usr/local/opengauss/bin/gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432 -c 'select generated_by, total_cost, snapshot_time from analytics_snapshots order by snapshot_time desc limit 5;'"
 ```
 
 如果能看到 `generated_by = 'spark'`，把截图放到报告“图 3-8 Spark 聚合结果写入 openGauss 截图”位置。

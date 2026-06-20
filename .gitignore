@@ -30,6 +30,12 @@ opengauss-data/
 
 # Logs and temporary files
 *.log
+*.aux
+*.toc
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
 *.tmp
 *.temp
 .DS_Store
@@ -43,7 +49,7 @@ Thumbs.db
 *.7z
 
 # External template cloned locally; not part of this course project submission
-whu-thesis/
+whu-thesis/.git/
 
 # Ad-hoc local screenshots not referenced by the report
 docs/screenshots/image.png

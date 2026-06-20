@@ -87,28 +87,18 @@ bash scripts/cloud-preflight.sh
 
 ## 3. openGauss 验证
 
-进入数据库容器：
+openGauss 镜像中的 `gsql` 不在默认 `PATH`，并且需要补充动态库路径。建议直接使用下面的一次性验证命令：
+
+```bash
+docker exec cloudcostlab-opengauss bash -c "LD_LIBRARY_PATH=/usr/local/opengauss/lib:/usr/local/opengauss/lib/postgresql /usr/local/opengauss/bin/gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432 -c 'select count(*) as resources from cloud_resources; select count(*) as usage_records from usage_records; select generated_by, resource_count, active_count, total_cost, avg_utilization_score, carbon_kg, top_region, risk_count, snapshot_time from analytics_snapshots order by snapshot_time desc limit 5; select severity, alert_type, title, status from cloud_alerts order by created_at desc limit 5; select event_type, message, created_at from audit_events order by created_at desc limit 10;'"
+```
+
+如果需要交互式排查，可以先进入容器，再手动执行完整路径：
 
 ```bash
 docker exec -it cloudcostlab-opengauss bash
-```
-
-连接数据库：
-
-```bash
-gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432
-```
-
-常用检查 SQL：
-
-```sql
-\dt
-select count(*) from cloud_resources;
-select count(*) from usage_records;
-select * from analytics_snapshots order by snapshot_time desc limit 5;
-select category, severity, title from cloud_insights order by created_at desc limit 5;
-select severity, alert_type, title, status from cloud_alerts order by created_at desc limit 5;
-select event_type, message, created_at from audit_events order by created_at desc limit 10;
+export LD_LIBRARY_PATH=/usr/local/opengauss/lib:/usr/local/opengauss/lib/postgresql
+/usr/local/opengauss/bin/gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432
 ```
 
 宿主机也可以通过 `localhost:15432` 连接。默认账号密码在 `.env.example` 中，生产环境应修改密码。
@@ -156,9 +146,7 @@ docker compose --profile spark run --rm spark-analytics
 验证：
 
 ```bash
-docker exec -it cloudcostlab-opengauss bash
-gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432 \
-  -c "select generated_by, total_cost, snapshot_time from analytics_snapshots order by snapshot_time desc limit 5;"
+docker exec cloudcostlab-opengauss bash -c "LD_LIBRARY_PATH=/usr/local/opengauss/lib:/usr/local/opengauss/lib/postgresql /usr/local/opengauss/bin/gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432 -c 'select generated_by, total_cost, snapshot_time from analytics_snapshots order by snapshot_time desc limit 5;'"
 ```
 
 ## 6. 可选 Kubernetes 部署
