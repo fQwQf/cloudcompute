@@ -149,21 +149,7 @@ docker compose --profile spark run --rm spark-analytics
 docker exec cloudcostlab-opengauss bash -c "LD_LIBRARY_PATH=/usr/local/opengauss/lib:/usr/local/opengauss/lib/postgresql /usr/local/opengauss/bin/gsql -d postgres -U gaussdb -W 'CloudGauss@2026' -h 127.0.0.1 -p 5432 -c 'select generated_by, total_cost, snapshot_time from analytics_snapshots order by snapshot_time desc limit 5;'"
 ```
 
-## 6. 可选 Kubernetes 部署
-
-先构建镜像，并按实际镜像仓库修改 `deploy/k8s/*.yaml` 中的 `image` 字段：
-
-```bash
-docker build -t cloudcostlab-backend:latest ./backend
-docker build -t cloudcostlab-frontend:latest ./frontend
-kubectl apply -f deploy/k8s/opengauss.yaml
-kubectl apply -f deploy/k8s/backend.yaml
-kubectl apply -f deploy/k8s/frontend.yaml
-```
-
-前端 NodePort 默认为 `30080`。如果部署在华为云 CCE 或开发者空间的 Kubernetes 环境中，需要按平台提示开放访问端口。
-
-## 7. 常见问题
+## 6. 常见问题
 
 `backend` 日志中短时间出现数据库连接失败：openGauss 首次初始化较慢，后端有重试逻辑，等待后再次查看日志。
 

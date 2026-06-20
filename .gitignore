@@ -48,8 +48,8 @@ Thumbs.db
 *.tgz
 *.7z
 
-# External template cloned locally; not part of this course project submission
-whu-thesis/.git/
+# External template clone metadata if the report template is refreshed locally
+latex-report/whu-thesis/.git/
 
 # Ad-hoc local screenshots not referenced by the report
 docs/screenshots/image.png
