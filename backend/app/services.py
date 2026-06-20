@@ -900,7 +900,7 @@ def seed_demo_data(db: Session, reset: bool = False) -> None:
 
     resources = [
         ResourceCreate(
-            name="ecs-billing-api",
+            name="order-service",
             provider="Huawei Cloud",
             region="cn-east-3",
             resource_type="ECS",
@@ -909,7 +909,7 @@ def seed_demo_data(db: Session, reset: bool = False) -> None:
             monthly_budget=520,
         ),
         ResourceCreate(
-            name="gaussdb-core",
+            name="customer-ledger",
             provider="Huawei Cloud",
             region="cn-north-4",
             resource_type="GaussDB",
@@ -918,7 +918,7 @@ def seed_demo_data(db: Session, reset: bool = False) -> None:
             monthly_budget=880,
         ),
         ResourceCreate(
-            name="obs-log-archive",
+            name="audit-archive",
             provider="Huawei Cloud",
             region="cn-south-1",
             resource_type="OBS",
@@ -927,7 +927,7 @@ def seed_demo_data(db: Session, reset: bool = False) -> None:
             monthly_budget=240,
         ),
         ResourceCreate(
-            name="mrs-spark-etl",
+            name="sales-report",
             provider="Huawei Cloud",
             region="cn-east-3",
             resource_type="MRS/Spark",

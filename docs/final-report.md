@@ -46,7 +46,7 @@
 
 ### 1.1 课程选题背景（或需求分析）
 
-本次课程实验要求部署 openGauss / GaussDB 数据库，并完成一个前后端分离的 Web 应用。最开始设计题目时，我没有选择只做一个简单的信息管理系统，而是结合云计算课程内容，把应用主题定为“云资源成本与碳排放分析平台”。这个题目和云平台的实际使用场景比较接近：在一台云主机、一个数据库或者一个对象存储桶刚创建时，资源数量不多，人工记录还可以接受；但资源数量增加后，哪些资源成本高、哪些资源利用率低、哪些资源接近预算，靠表格很难及时发现。
+本次课程实验要求部署 openGauss / GaussDB 数据库，并完成一个前后端分离的 Web 应用。最开始设计题目时，我没有选择只做一个简单的信息管理系统，而是结合云计算课程内容，把应用主题定为“云资源成本与碳排放分析平台”。主要原因是因为我的华为云预算控制没做好造成欠费了——因此至少对我而言这是十分有需求的。并且，除了预算，使用也和排放息息相关。这个题目和云平台的实际使用场景比较接近：在一台云主机、一个数据库或者一个对象存储桶刚创建时，资源数量不多，人工记录还可以接受；但资源数量增加后，哪些资源成本高、哪些资源利用率低、哪些资源接近预算，靠表格很难及时发现。
 
 因此，本实验的核心需求可以分为三类。
 
@@ -129,7 +129,7 @@ Spark 批处理任务
 ```
 
 图 2-1 系统总体架构图  
-（此处插入自己绘制的架构图，建议画出 frontend、backend、opengauss、spark-analytics 四个容器）
+（补充截图位置：可在 Word 中绘制一张架构图，或用 draw.io / ProcessOn 绘制 frontend、backend、opengauss、spark-analytics 四个容器及 `/api`、SQLAlchemy、JDBC 三条链路。）
 
 数据流转过程如下：
 
@@ -138,7 +138,7 @@ Spark 批处理任务
 3. 后端校验请求参数，并通过 SQLAlchemy 写入 openGauss。
 4. 后端在服务层计算成本、碳排放、趋势、预算风险和告警。
 5. 前端重新请求接口，展示最新指标、图表、告警和审计日志。
-6. 可选 Spark 任务通过 JDBC 读取明细表，批量生成分析快照。
+6. Spark 任务通过 JDBC 读取明细表，批量生成分析快照并写回 openGauss。
 
 这个架构的优点是边界比较清晰：前端只负责交互和展示，后端负责业务逻辑和数据库访问，openGauss 负责持久化数据，Spark 负责批处理分析。检查时也可以分别展示页面、接口文档、数据库表和容器状态。
 
@@ -174,9 +174,6 @@ Spark 批处理任务
 | `cloud_alerts` | 保存告警信息，如预算告警、异常成本告警、利用率告警和碳排放告警 |
 | `audit_events` | 保存审计日志，记录新增、更新、删除、导入、分析、确认告警等操作 |
 
-图 2-2 数据库表结构截图  
-（此处插入 `gsql` 执行 `\dt` 或数据库客户端中的表结构截图）
-
 核心表字段说明如下。
 
 `cloud_resources` 表记录资源的基础属性，其中 `monthly_budget` 用于后续计算预算风险，`status` 用于区分 active、paused、retired 三种状态。
@@ -186,6 +183,9 @@ Spark 批处理任务
 `analytics_snapshots` 表保存聚合快照。该表有一个 `generated_by` 字段，用于区分快照是由 API 生成还是由 Spark 任务生成。
 
 `cloud_alerts` 表保存告警规则执行结果，并通过 `status` 和 `acknowledged_at` 字段记录告警是否已确认。
+
+图 2-2 数据库表结构截图  
+（补充截图位置：进入 openGauss 后执行 `\dt`，或展示 `database/schema.sql` 中 6 张表的定义。）
 
 ### 2.4 功能模块设计与实现
 
@@ -206,7 +206,10 @@ Spark 批处理任务
 每次新增、修改或删除资源时，后端都会写入一条审计日志。这样在演示时可以同时展示“前端操作成功”和“数据库中留下了操作记录”。
 
 图 2-3 资源管理页面截图  
-（此处插入前端资源清单和新增资源表单截图）
+
+![图 2-3-1 新增资源与写入用量表单](screenshots/04-resource-usage-forms.png)
+
+![图 2-3-2 资源清单、查询和状态操作](screenshots/05-resource-table.png)
 
 #### 2.4.2 用量采集与成本估算模块
 
@@ -250,7 +253,8 @@ carbon_kg = energy_kwh * 0.581
 点击“聚合”按钮后，前端调用 `POST /api/analytics/recompute`，后端将当前统计结果保存到 `analytics_snapshots` 表中。这个功能用于证明分析结果不仅在内存中计算，还可以写回 openGauss。
 
 图 2-4 系统总览页面截图  
-（此处插入顶部指标卡和趋势图截图）
+
+![图 2-4 系统总览页面](screenshots/01-dashboard-overview.png)
 
 #### 2.4.4 成本分析模块
 
@@ -270,7 +274,8 @@ carbon_kg = energy_kwh * 0.581
 异常检测的实现思路是：按资源和日期聚合成本，计算某个资源近 30 天的平均成本和标准差，如果某一天成本明显高于基线，则认为存在成本尖峰。这个方法不是复杂模型，但对于课程项目来说足够展示数据分析过程。
 
 图 2-5 成本分析页面截图  
-（此处插入成本分析、预测图、优化建议和异常尖峰截图）
+
+![图 2-5 成本分析与优化模拟页面](screenshots/02-cost-analysis.png)
 
 #### 2.4.5 优化模拟模块
 
@@ -298,7 +303,8 @@ POST /api/insights/simulate
 告警生成后，前端可以点击确认按钮，将告警状态从 `open` 改为 `acknowledged`。这个过程会同时写入审计日志。
 
 图 2-6 告警中心页面截图  
-（此处插入告警列表和确认告警后的状态截图）
+
+![图 2-6 告警中心、CSV 导入和运维周报入口](screenshots/03-operations-alerts.png)
 
 #### 2.4.7 CSV 导入、导出和周报模块
 
@@ -344,7 +350,7 @@ order by snapshot_time desc
 limit 5;
 ```
 
-如果查询结果中出现 `generated_by = 'spark'` 的记录，就说明 Spark 任务成功读写 openGauss。
+本项目已经完成该 Spark JDBC 任务。运行后如果查询结果中出现 `generated_by = 'spark'` 的记录，就说明 Spark 任务成功读写 openGauss。
 
 ### 2.5 关键实现说明
 
@@ -392,7 +398,8 @@ limit 5;
 | 数据库宿主机端口 | 15432 |
 
 图 3-1 华为云开发者空间项目目录截图  
-（此处插入开发者空间终端中项目目录截图）
+
+![](screenshots/image.png)
 
 ### 3.2 部署 openGauss / GaussDB
 
@@ -421,7 +428,7 @@ docker pull docker.m.daocloud.io/enmotech/opengauss:3.0.0
 ```
 
 图 3-2 openGauss 镜像拉取成功截图  
-（此处插入 `docker pull` 成功截图）
+（补充截图位置：截取 `docker pull docker.m.daocloud.io/enmotech/opengauss:3.0.0` 成功输出。）
 
 然后启动所有服务。
 
@@ -445,7 +452,7 @@ docker compose ps
 ```
 
 图 3-3 Docker Compose 服务运行状态截图  
-（此处插入 `docker compose ps` 截图，要求能看到 opengauss、backend、frontend 三个容器）
+（补充截图位置：截取 `docker compose ps` 输出，要求能看到 `cloudcostlab-opengauss`、`cloudcostlab-backend`、`cloudcostlab-frontend` 三个容器。）
 
 连接 openGauss。
 
@@ -466,7 +473,7 @@ select severity, alert_type, title, status from cloud_alerts order by created_at
 ```
 
 图 3-4 openGauss 表结构和数据查询截图  
-（此处插入 `\dt` 和几条 `select` 结果截图）
+（补充截图位置：截取 `\dt` 以及 `cloud_resources`、`usage_records`、`analytics_snapshots`、`cloud_alerts` 等查询结果。）
 
 ### 3.3 部署后端应用
 
@@ -505,7 +512,8 @@ http://localhost:8000/docs
 ```
 
 图 3-5 FastAPI Swagger 接口文档截图  
-（此处插入 Swagger 页面截图）
+
+![图 3-5 FastAPI Swagger 接口文档](screenshots/07-swagger-api-docs.png)
 
 ### 3.4 部署前端应用
 
@@ -525,7 +533,12 @@ http://localhost:8080
 在华为云开发者空间中，需要将 8080 端口暴露为 Web 访问端口。如果需要展示后端接口文档，也可以同时暴露 8000 端口。
 
 图 3-6 前端首页截图  
-（此处插入 CloudCostLab 页面截图）
+
+![图 3-6 CloudCostLab 前端完整页面](screenshots/01-dashboard-fullpage.png)
+
+图 3-7 移动端视口页面截图
+
+![图 3-7 移动端视口下的系统首页](screenshots/08-mobile-dashboard.png)
 
 ### 3.5 Spark 批处理任务
 
@@ -544,8 +557,8 @@ order by snapshot_time desc
 limit 5;
 ```
 
-图 3-7 Spark 聚合结果写入 openGauss 截图  
-（此处插入 `generated_by='spark'` 的查询结果截图；如果现场不演示 Spark，可删除本图）
+图 3-8 Spark 聚合结果写入 openGauss 截图  
+（补充截图位置：运行 Spark 任务后，截取 `analytics_snapshots` 中 `generated_by='spark'` 的查询结果。）
 
 ## 4 测试评估
 
@@ -588,7 +601,7 @@ dist/assets/index-*.js
 ```
 
 图 4-1 后端测试和前端构建通过截图  
-（此处插入终端测试通过截图）
+（补充截图位置：截取 `PYTHONPATH=. python3 -m pytest -q` 和 `npm run build` 的通过结果。）
 
 ### 4.2 功能测试
 
@@ -612,7 +625,7 @@ dist/assets/index-*.js
 | 14 | CSV 导入 | 上传样例 CSV | 创建资源并写入用量记录 | 通过 |
 | 15 | 周报下载 | 点击“周报” | 下载 Markdown 周报 | 通过 |
 | 16 | 资源导出 | 点击“导出” | 下载 CSV 文件 | 通过 |
-| 17 | Spark 聚合 | 运行 Spark profile | 写入 `generated_by='spark'` 的快照 | 可选通过 |
+| 17 | Spark 聚合 | 运行 Spark profile | 写入 `generated_by='spark'` 的快照 | 通过 |
 
 ### 4.3 数据库读写验证
 
@@ -654,8 +667,9 @@ order by created_at desc
 limit 10;
 ```
 
-图 4-2 前端操作后 openGauss 数据变化截图  
-（此处插入资源、用量、告警、审计日志查询截图）
+图 4-2 前端操作后最近用量和审计日志截图
+
+![图 4-2 最近用量、预算风险和审计日志](screenshots/06-audit-usage-risk.png)
 
 ### 4.4 部署验证
 
